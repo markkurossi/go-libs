@@ -6,6 +6,8 @@
 // All rights reserved.
 //
 
+// Package uuid implements Universally Unique Identifier (UUID)
+// handling, as specified by RFC 4122.
 package uuid
 
 import (
