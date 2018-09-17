@@ -105,6 +105,10 @@ func (id UUID) Node() []byte {
 	return id[10:16]
 }
 
+func (id *UUID) Set(data []byte) {
+	copy(id[:], data)
+}
+
 func (id UUID) Compare(id2 UUID) int {
 	if id.TimeLow() < id2.TimeLow() {
 		return -1

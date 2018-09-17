@@ -27,3 +27,13 @@ func TestParseString(t *testing.T) {
 		fmt.Printf("UUID: %s\n", id)
 	}
 }
+
+func TestSet(t *testing.T) {
+	uuid := UUID{}
+	id, _ := Parse(uuids[0])
+	uuid.Set(id[:])
+
+	if uuid.Compare(id) != 0 {
+		t.Errorf("UUID.Set() failed")
+	}
+}
