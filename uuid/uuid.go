@@ -217,6 +217,14 @@ func Parse(value string) (UUID, error) {
 	return id, nil
 }
 
+func MustParse(value string) UUID {
+	id, err := Parse(value)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to parse UUID %s: %s\n", value, err))
+	}
+	return id
+}
+
 func ParseData(data []byte) (UUID, error) {
 	if len(data) != 16 {
 		return Nil, errors.New("Invalid data length")

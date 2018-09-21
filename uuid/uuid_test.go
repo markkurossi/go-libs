@@ -17,6 +17,7 @@ var uuids = []string{
 	"urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6",
 	"00000000-0000-0000-0000-000000000000",
 	"{123e4567-e89b-12d3-a456-426655440000}",
+	"792e5b37-4505-47ef-b7d2-8711bb7affa8",
 }
 
 func TestParseString(t *testing.T) {
