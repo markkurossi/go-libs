@@ -79,7 +79,7 @@ var Nil UUID
 var reUUID = regexp.MustCompile("^\\{?(urn:uuid:)?([[:xdigit:]]{8})-([[:xdigit:]]{4})-([[:xdigit:]]{4})-([[:xdigit:]]{4})-([[:xdigit:]]{12})\\}?$")
 
 func (id UUID) String() string {
-	return fmt.Sprintf("%08x-%04x-%04x-%0x-%0x",
+	return fmt.Sprintf("%08X-%04X-%04X-%0X-%0X",
 		id.TimeLow(), id.TimeMid(), id.TimeHiAndVersion(), id[8:10], id[10:16])
 }
 
