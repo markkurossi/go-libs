@@ -112,7 +112,7 @@ func (id UUID) TimeHiAndVersion() uint16 {
 
 func (id UUID) Time() uint64 {
 	return (uint64(id.TimeHiAndVersion()&0x0f) << 48) |
-		uint64(id.TimeMid()<<32) |
+		uint64(id.TimeMid())<<32 |
 		uint64(id.TimeLow())
 }
 
