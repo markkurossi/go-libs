@@ -11,12 +11,15 @@ package tlv
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"sort"
 )
 
 var (
-	bo = binary.BigEndian
+	bo             = binary.BigEndian
+	ErrorTruncated = errors.New("truncated data")
+	ErrorEOF       = errors.New("unexpected EOF")
 )
 
 type Type uint32
@@ -155,7 +158,7 @@ func (v Values) Marshal() ([]byte, error) {
 			buf.Write(d)
 
 		default:
-			fmt.Printf("Type %T (val=%v) not supported\n", val, val)
+			return nil, fmt.Errorf("type %T (val=%v) not supported", val, val)
 		}
 	}
 
@@ -183,7 +186,7 @@ func Unmarshal(data []byte) (Values, error) {
 		var val interface{}
 
 		if ofs+int(length) > len(data) {
-			return nil, fmt.Errorf("Truncated data")
+			return nil, ErrorTruncated
 		}
 
 		switch tag.VType() {
@@ -209,7 +212,7 @@ func Unmarshal(data []byte) (Values, error) {
 				val = bo.Uint64(data[ofs:])
 
 			default:
-				return nil, fmt.Errorf("Invalid integer data length %d", length)
+				return nil, fmt.Errorf("invalid integer data length %d", length)
 			}
 
 		case VT_STRING:
@@ -225,7 +228,7 @@ func Unmarshal(data []byte) (Values, error) {
 			}
 
 		default:
-			return nil, fmt.Errorf("Invalid value type %s", tag.VType())
+			return nil, fmt.Errorf("invalid value type %s", tag.VType())
 		}
 		ofs += int(length)
 
@@ -265,7 +268,7 @@ func unmarshalInt(data []byte, ofs int) (uint64, int, error) {
 	var result uint64
 	for i := 0; i < 5; i++ {
 		if ofs >= len(data) {
-			return 0, ofs, fmt.Errorf("Unexpected EOF")
+			return 0, ofs, ErrorEOF
 		}
 		bit := data[ofs] & 0x80
 		val := data[ofs] & 0x7f
@@ -279,5 +282,5 @@ func unmarshalInt(data []byte, ofs int) (uint64, int, error) {
 			return result, ofs, nil
 		}
 	}
-	return 0, ofs, fmt.Errorf("Unexpected EOF")
+	return 0, ofs, ErrorEOF
 }
