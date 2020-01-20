@@ -10,8 +10,10 @@ package tlv
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"testing"
 )
 
@@ -66,7 +68,7 @@ func TestMarshal(t *testing.T) {
 
 	data, err := values.Marshal()
 	if err != nil {
-		t.Errorf("Marshal failed: %s\n", err)
+		t.Fatalf("Marshal failed: %s\n", err)
 	}
 	fmt.Printf("Data:\n%s", hex.Dump(data))
 
@@ -103,4 +105,44 @@ func TestMarshal(t *testing.T) {
 			}
 		}
 	}
+}
+
+var token = "BCkSC01GLWpDOHRJRkpRGgtYbFB4OWZ1bXhLZyEIAAAAAF4jM9wsAwABAQtATFNxfKFwTMhuP3RBVpoQN_DigoNxZhdgAyueEjc9NNdglZLkIAVuEiOv52w3snPQ5VtcRo8cRAOc8XsnolB3Cw"
+
+func TestDump(t *testing.T) {
+	data, err := base64.RawURLEncoding.DecodeString(token)
+	if err != nil {
+		t.Fatalf("Failed to decode token: %s", err)
+	}
+	values, err := Unmarshal(data)
+	if err != nil {
+		t.Fatalf("TLV unmarshal: %s", err)
+	}
+	values.Dump(os.Stdout, Symtab{
+		0: Symbol{
+			Name: "values",
+			Child: Symtab{
+				2: Symbol{
+					Name: "tenant_id",
+				},
+				3: Symbol{
+					Name: "client_id",
+				},
+				4: Symbol{
+					Name: "created",
+				},
+				5: Symbol{
+					Name: "scope",
+					Child: Symtab{
+						0: Symbol{
+							Name: "admin",
+						},
+					},
+				},
+			},
+		},
+		1: Symbol{
+			Name: "signature",
+		},
+	})
 }

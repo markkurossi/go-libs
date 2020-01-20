@@ -13,6 +13,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
 	"sort"
 )
 
@@ -26,6 +27,7 @@ type Type uint32
 
 type Values map[Type]interface{}
 
+// Keys returns the keys in sorted order.
 func (v Values) Keys() []Type {
 	keys := make([]Type, len(v))
 	i := 0
@@ -37,6 +39,57 @@ func (v Values) Keys() []Type {
 		return keys[i] < keys[j]
 	})
 	return keys
+}
+
+type Symtab map[Type]Symbol
+
+type Symbol struct {
+	Name  string
+	Child Symtab
+}
+
+func (v Values) Dump(w io.Writer, s Symtab) {
+	v.dump(w, s, 0)
+}
+
+func (v Values) dump(w io.Writer, s Symtab, indent int) {
+	for _, t := range v.Keys() {
+		var child Symtab
+
+		symbol, ok := s[t]
+
+		v.prefix(w, indent)
+		if ok {
+			fmt.Fprintf(w, "%s: ", symbol.Name)
+			child = symbol.Child
+		} else {
+			fmt.Fprintf(w, "%d: ", t)
+		}
+		switch val := v[t].(type) {
+		case string:
+			fmt.Fprintf(w, "%q", val)
+
+		case []byte:
+			fmt.Fprintf(w, "%x", val)
+
+		case Values:
+			fmt.Fprintf(w, "{\n")
+			val.dump(w, child, indent+1)
+
+			v.prefix(w, indent)
+			fmt.Fprintf(w, "}")
+
+		default:
+			fmt.Fprintf(w, "%v", val)
+		}
+		fmt.Fprintf(w, "\n")
+	}
+}
+
+func (v Values) prefix(w io.Writer, indent int) {
+	for i := 0; i < indent; i++ {
+		fmt.Fprintf(w, "    ")
+	}
 }
 
 type VType uint8
