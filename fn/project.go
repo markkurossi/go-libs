@@ -1,7 +1,7 @@
 //
 // project.go
 //
-// Copyright (c) 2019 Markku Rossi
+// Copyright (c) 2019-2023 Markku Rossi
 //
 // All rights reserved.
 //
@@ -15,6 +15,7 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
+// GetProjectID returns the Google Cloud Functions project ID.
 func GetProjectID() (string, error) {
 	ctx := context.Background()
 

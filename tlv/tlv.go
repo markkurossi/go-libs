@@ -1,7 +1,7 @@
 //
 // tlv.go
 //
-// Copyright (c) 2019 Markku Rossi
+// Copyright (c) 2019-2023 Markku Rossi
 //
 // All rights reserved.
 //
@@ -18,13 +18,20 @@ import (
 )
 
 var (
-	bo             = binary.BigEndian
+	bo = binary.BigEndian
+
+	// ErrorTruncated is returned if the binary data does not contain
+	// specified number of elements in the TLV's length encoding.
 	ErrorTruncated = errors.New("truncated data")
-	ErrorEOF       = errors.New("unexpected EOF")
+
+	// ErrorEOF is returned if an unexpected EOF is encountered.
+	ErrorEOF = errors.New("unexpected EOF")
 )
 
+// Type specifies TLV types.
 type Type uint32
 
+// Values specify a collection of key-value pairs.
 type Values map[Type]interface{}
 
 // Keys returns the keys in sorted order.
@@ -41,13 +48,17 @@ func (v Values) Keys() []Type {
 	return keys
 }
 
+// Symtab specifies mapping from types to their names.
 type Symtab map[Type]Symbol
 
+// Symbol specifies a symtab entry.
 type Symbol struct {
 	Name  string
 	Child Symtab
 }
 
+// Dump prints the value to the specified writer. The Symtab argument
+// specifies type names.
 func (v Values) Dump(w io.Writer, s Symtab) {
 	v.dump(w, s, 0)
 }
@@ -92,22 +103,24 @@ func (v Values) prefix(w io.Writer, indent int) {
 	}
 }
 
+// VType defines value type.
 type VType uint8
 
+// Value types.
 const (
-	VT_BOOL VType = iota
-	VT_INT
-	VT_STRING
-	VT_DATA
-	VT_MAP
+	VTBool VType = iota
+	VTInt
+	VTString
+	VTData
+	VTMap
 )
 
 var vtypes = map[VType]string{
-	VT_BOOL:   "bool",
-	VT_INT:    "int",
-	VT_STRING: "string",
-	VT_DATA:   "data",
-	VT_MAP:    "map",
+	VTBool:   "bool",
+	VTInt:    "int",
+	VTString: "string",
+	VTData:   "data",
+	VTMap:    "map",
 }
 
 func (vt VType) String() string {
@@ -118,20 +131,25 @@ func (vt VType) String() string {
 	return fmt.Sprintf("{VType %d}", vt)
 }
 
+// Tag defines value's type and value type.
 type Tag uint64
 
+// Type returns the type of the tag.
 func (t Tag) Type() Type {
 	return Type(t >> 3)
 }
 
+// SetType sets the type of the tag.
 func (t *Tag) SetType(val Type) {
 	*t = Tag(val)<<3 | Tag(*t&0x7)
 }
 
+// VType returns the type of the tag value.
 func (t Tag) VType() VType {
 	return VType(t & 0x7)
 }
 
+// SetVType sets the type of the tag value.
 func (t *Tag) SetVType(val VType) {
 	*t = Tag(*t&^0x7) | Tag(val)
 }
@@ -140,6 +158,7 @@ func (t Tag) String() string {
 	return fmt.Sprintf("%s: %d", t.VType(), t.Type())
 }
 
+// Marshal encodes the values into binary TLV-encoding.
 func (v Values) Marshal() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	var tmp [8]byte
@@ -151,7 +170,7 @@ func (v Values) Marshal() ([]byte, error) {
 
 		switch val := v[key].(type) {
 		case bool:
-			tag.SetVType(VT_BOOL)
+			tag.SetVType(VTBool)
 			marshalInt(uint64(tag), buf)
 			buf.WriteByte(1)
 			if val {
@@ -161,47 +180,47 @@ func (v Values) Marshal() ([]byte, error) {
 			}
 
 		case uint8:
-			tag.SetVType(VT_INT)
+			tag.SetVType(VTInt)
 			marshalInt(uint64(tag), buf)
 			buf.WriteByte(1)
 			buf.WriteByte(byte(val))
 
 		case uint16:
-			tag.SetVType(VT_INT)
+			tag.SetVType(VTInt)
 			marshalInt(uint64(tag), buf)
 			marshalInt(2, buf)
 			bo.PutUint16(tmp[:], uint16(val))
 			buf.Write(tmp[:2])
 
 		case uint32:
-			tag.SetVType(VT_INT)
+			tag.SetVType(VTInt)
 			marshalInt(uint64(tag), buf)
 			marshalInt(4, buf)
 			bo.PutUint32(tmp[:], uint32(val))
 			buf.Write(tmp[:4])
 
 		case uint64:
-			tag.SetVType(VT_INT)
+			tag.SetVType(VTInt)
 			marshalInt(uint64(tag), buf)
 			marshalInt(8, buf)
 			bo.PutUint64(tmp[:], uint64(val))
 			buf.Write(tmp[:8])
 
 		case string:
-			tag.SetVType(VT_STRING)
+			tag.SetVType(VTString)
 			marshalInt(uint64(tag), buf)
 			data := []byte(val)
 			marshalInt(uint64(len(data)), buf)
 			buf.Write(data)
 
 		case []byte:
-			tag.SetVType(VT_DATA)
+			tag.SetVType(VTData)
 			marshalInt(uint64(tag), buf)
 			marshalInt(uint64(len(val)), buf)
 			buf.Write(val)
 
 		case Values:
-			tag.SetVType(VT_MAP)
+			tag.SetVType(VTMap)
 			marshalInt(uint64(tag), buf)
 			d, err := val.Marshal()
 			if err != nil {
@@ -218,6 +237,7 @@ func (v Values) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Unmarshal decodes the TLV-encoded data.
 func Unmarshal(data []byte) (Values, error) {
 	result := make(Values)
 	ofs := 0
@@ -243,14 +263,14 @@ func Unmarshal(data []byte) (Values, error) {
 		}
 
 		switch tag.VType() {
-		case VT_BOOL:
+		case VTBool:
 			if data[ofs] != 0 {
 				val = true
 			} else {
 				val = false
 			}
 
-		case VT_INT:
+		case VTInt:
 			switch length {
 			case 1:
 				val = uint8(data[ofs])
@@ -268,13 +288,13 @@ func Unmarshal(data []byte) (Values, error) {
 				return nil, fmt.Errorf("invalid integer data length %d", length)
 			}
 
-		case VT_STRING:
+		case VTString:
 			val = string(data[ofs : ofs+int(length)])
 
-		case VT_DATA:
+		case VTData:
 			val = data[ofs : ofs+int(length)]
 
-		case VT_MAP:
+		case VTMap:
 			val, err = Unmarshal(data[ofs : ofs+int(length)])
 			if err != nil {
 				return nil, err

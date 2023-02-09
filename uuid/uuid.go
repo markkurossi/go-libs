@@ -1,7 +1,7 @@
 //
 // uuid.go
 //
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2023 Markku Rossi
 //
 // All rights reserved.
 //
@@ -31,7 +31,9 @@ import (
 // practice.
 //
 // 0                   1                   2                   3
-//  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+//
+//	0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+//
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // |                          time_low                             |
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -43,13 +45,15 @@ import (
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //
 // If the UUID variant is `Microsoft', the first 3 elements are
-// encoded in little-endian format. This has practially no affect
+// encoded in little-endian format. This has practically no affect
 // unless you have to match ASCII and binary UUIDs in which case the
 // equality differs between variants.
 type UUID [16]byte
 
+// Variant defines the UUID variant.
 type Variant uint8
 
+// UUID variants.
 const (
 	ReservedNCS Variant = iota
 	RFC4122
@@ -83,43 +87,48 @@ func (id UUID) String() string {
 		id.TimeLow(), id.TimeMid(), id.TimeHiAndVersion(), id[8:10], id[10:16])
 }
 
+// TimeLow returns the timestamp low-order bits.
 func (id UUID) TimeLow() uint32 {
 	_, variant := id.ClkSeqHiAndVariant()
 	if variant == Microsoft {
 		return binary.LittleEndian.Uint32(id[0:4])
-	} else {
-		return binary.BigEndian.Uint32(id[0:4])
 	}
+	return binary.BigEndian.Uint32(id[0:4])
 }
 
+// TimeMid returns the mid-part of the timestamp.
 func (id UUID) TimeMid() uint16 {
 	_, variant := id.ClkSeqHiAndVariant()
 	if variant == Microsoft {
 		return binary.LittleEndian.Uint16(id[4:6])
-	} else {
-		return binary.BigEndian.Uint16(id[4:6])
 	}
+	return binary.BigEndian.Uint16(id[4:6])
 }
 
+// TimeHiAndVersion returns the timestamp high-order bits and version
+// number.
 func (id UUID) TimeHiAndVersion() uint16 {
 	_, variant := id.ClkSeqHiAndVariant()
 	if variant == Microsoft {
 		return binary.LittleEndian.Uint16(id[6:8])
-	} else {
-		return binary.BigEndian.Uint16(id[6:8])
 	}
+	return binary.BigEndian.Uint16(id[6:8])
 }
 
+// Time returns the UUID timestamp.
 func (id UUID) Time() uint64 {
 	return (uint64(id.TimeHiAndVersion()&0x0f) << 48) |
 		uint64(id.TimeMid())<<32 |
 		uint64(id.TimeLow())
 }
 
+// Version returns the UUID version.
 func (id UUID) Version() uint8 {
 	return uint8(id.TimeHiAndVersion() >> 12)
 }
 
+// ClkSeqHiAndVariant returns the clock sequence hi-order bits and
+// variant.
 func (id UUID) ClkSeqHiAndVariant() (uint8, Variant) {
 	val := id[8]
 	if (val & 0x80) == 0 {
@@ -134,15 +143,18 @@ func (id UUID) ClkSeqHiAndVariant() (uint8, Variant) {
 	return val & 0x1f, ReservedFuture
 }
 
+// ClkSeqLow returns the 8 low-order bits of the clock sequence.
 func (id UUID) ClkSeqLow() uint8 {
 	return id[9]
 }
 
+// ClkSeq returns the UUID clock sequence as an uint16 number.
 func (id UUID) ClkSeq() uint16 {
 	hi, _ := id.ClkSeqHiAndVariant()
 	return uint16(hi)<<8 | uint16(id.ClkSeqLow())
 }
 
+// Node returns the node part of the UUID.
 func (id UUID) Node() []byte {
 	return id[10:16]
 }
@@ -152,6 +164,9 @@ func (id *UUID) Set(data []byte) {
 	copy(id[:], data)
 }
 
+// Compare compares the UUID to the argument UUID. The function
+// returns -1, 0, 1 if this UUID is smaller, equal, or greater than
+// the argument UUID respectively.
 func (id UUID) Compare(id2 UUID) int {
 	if id.TimeLow() < id2.TimeLow() {
 		return -1
@@ -188,6 +203,7 @@ func (id UUID) Compare(id2 UUID) int {
 	return bytes.Compare(id.Node(), id2.Node())
 }
 
+// Parse parses the string as an UUID.
 func Parse(value string) (UUID, error) {
 	m := reUUID.FindStringSubmatch(value)
 	if m == nil {
@@ -217,6 +233,8 @@ func Parse(value string) (UUID, error) {
 	return id, nil
 }
 
+// MustParse parses the UUID string. The function panics if the
+// argument string is not a valid UUID.
 func MustParse(value string) UUID {
 	id, err := Parse(value)
 	if err != nil {
@@ -225,6 +243,7 @@ func MustParse(value string) UUID {
 	return id
 }
 
+// ParseData parses the UUID data.
 func ParseData(data []byte) (UUID, error) {
 	if len(data) != 16 {
 		return Nil, errors.New("Invalid data length")
