@@ -1,7 +1,7 @@
 //
 // uuid_test.go
 //
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2023 Markku Rossi
 //
 // All rights reserved.
 //
@@ -28,6 +28,19 @@ func TestParseString(t *testing.T) {
 		}
 		fmt.Printf("UUID: %s\n", id)
 	}
+}
+
+func FuzzParseStrings(f *testing.F) {
+	for _, uuid := range uuids {
+		f.Add(uuid)
+	}
+	f.Fuzz(func(t *testing.T, uuid string) {
+		id, err := Parse(uuid)
+		if err != nil {
+			return
+		}
+		_ = id
+	})
 }
 
 func TestSet(t *testing.T) {
