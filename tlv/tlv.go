@@ -264,6 +264,9 @@ func Unmarshal(data []byte) (Values, error) {
 
 		switch tag.VType() {
 		case VTBool:
+			if length != 1 {
+				return nil, fmt.Errorf("invalid bool data length %d", length)
+			}
 			if data[ofs] != 0 {
 				val = true
 			} else {

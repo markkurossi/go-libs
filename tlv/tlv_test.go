@@ -1,7 +1,7 @@
 //
 // tlv.go
 //
-// Copyright (c) 2019 Markku Rossi
+// Copyright (c) 2019-2023 Markku Rossi
 //
 // All rights reserved.
 //
@@ -105,6 +105,42 @@ func TestMarshal(t *testing.T) {
 			}
 		}
 	}
+}
+
+func FuzzMarshal(f *testing.F) {
+	testcases := []Values{
+		{
+			Type(0): uint8(8),
+		},
+		{
+			Type(4): "Hello, world!",
+		},
+		{
+			Type(5): Values{
+				Type(3): uint32(0),
+			},
+		},
+		{
+			Type(6): true,
+		},
+		{
+			Type(8): []byte{1, 2, 3, 4},
+		},
+	}
+	for _, tc := range testcases {
+		data, err := tc.Marshal()
+		if err != nil {
+			f.Fatalf("Marshal failed: %s\n", err)
+		}
+		f.Add(data)
+	}
+
+	f.Fuzz(func(t *testing.T, orig []byte) {
+		_, err := Unmarshal(orig)
+		if err != nil {
+			fmt.Printf("Unmarshal failed: %v\n", err)
+		}
+	})
 }
 
 var token = "BCkSC01GLWpDOHRJRkpRGgtYbFB4OWZ1bXhLZyEIAAAAAF4jM9wsAwABAQtATFNxfKFwTMhuP3RBVpoQN_DigoNxZhdgAyueEjc9NNdglZLkIAVuEiOv52w3snPQ5VtcRo8cRAOc8XsnolB3Cw"
