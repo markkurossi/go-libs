@@ -116,8 +116,10 @@ func FuzzMarshal(f *testing.F) {
 			Type(4): "Hello, world!",
 		},
 		{
+			Type(4): "Hello, outer!",
 			Type(5): Values{
 				Type(3): uint32(0),
+				Type(4): "Hello, inner!",
 			},
 		},
 		{
