@@ -1,7 +1,7 @@
 //
 // tlv.go
 //
-// Copyright (c) 2019-2023 Markku Rossi
+// Copyright (c) 2019-2025 Markku Rossi
 //
 // All rights reserved.
 //
@@ -95,7 +95,7 @@ func TestMarshal(t *testing.T) {
 			if !ok {
 				t.Fatalf("Failed: %v, %v\n", eval, deval)
 			}
-			if bytes.Compare(eval, deval) != 0 {
+			if !bytes.Equal(eval, deval) {
 				t.Fatalf("Data mismatch: %x != %x", eval, deval)
 			}
 

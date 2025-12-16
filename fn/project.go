@@ -1,11 +1,13 @@
 //
 // project.go
 //
-// Copyright (c) 2019-2023 Markku Rossi
+// Copyright (c) 2019-2025 Markku Rossi
 //
 // All rights reserved.
 //
 
+// Package fn provides help functions for Google Cloud Function
+// implementations.
 package fn
 
 import (

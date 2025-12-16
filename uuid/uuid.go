@@ -1,7 +1,7 @@
 //
 // uuid.go
 //
-// Copyright (c) 2018-2023 Markku Rossi
+// Copyright (c) 2018-2025 Markku Rossi
 //
 // All rights reserved.
 //
@@ -80,7 +80,7 @@ func (v Variant) String() string {
 var Nil UUID
 
 // {urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6}
-var reUUID = regexp.MustCompile("^\\{?(urn:uuid:)?([[:xdigit:]]{8})-([[:xdigit:]]{4})-([[:xdigit:]]{4})-([[:xdigit:]]{4})-([[:xdigit:]]{12})\\}?$")
+var reUUID = regexp.MustCompile(`^\{?(urn:uuid:)?([[:xdigit:]]{8})-([[:xdigit:]]{4})-([[:xdigit:]]{4})-([[:xdigit:]]{4})-([[:xdigit:]]{12})\}?$`)
 
 func (id UUID) String() string {
 	return fmt.Sprintf("%08X-%04X-%04X-%0X-%0X",
@@ -207,7 +207,7 @@ func (id UUID) Compare(id2 UUID) int {
 func Parse(value string) (UUID, error) {
 	m := reUUID.FindStringSubmatch(value)
 	if m == nil {
-		return Nil, errors.New("Invalid UUID format")
+		return Nil, errors.New("invalid UUID format")
 	}
 
 	data, err := hex.DecodeString(m[2] + m[3] + m[4] + m[5] + m[6])
@@ -246,7 +246,7 @@ func MustParse(value string) UUID {
 // ParseData parses the UUID data.
 func ParseData(data []byte) (UUID, error) {
 	if len(data) != 16 {
-		return Nil, errors.New("Invalid data length")
+		return Nil, errors.New("invalid data length")
 	}
 
 	id := UUID{}

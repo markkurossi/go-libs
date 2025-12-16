@@ -1,11 +1,12 @@
 //
 // tlv.go
 //
-// Copyright (c) 2019-2023 Markku Rossi
+// Copyright (c) 2019-2025 Markku Rossi
 //
 // All rights reserved.
 //
 
+// Package tlv provides compact TLV encoding and decoding.
 package tlv
 
 import (
